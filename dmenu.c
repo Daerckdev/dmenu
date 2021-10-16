@@ -326,6 +326,8 @@ keypress(XKeyEvent *ev)
 	int len;
 	KeySym ksym;
 	Status status;
+	int i, offscreen = 0;
+	struct item *tmpsel;
 
 	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
 	switch (status) {
@@ -347,19 +349,17 @@ keypress(XKeyEvent *ev)
 		case XK_e: ksym = XK_End;       break;
 		case XK_f: ksym = XK_Right;     break;
 		case XK_g: ksym = XK_Escape;    break;
-		case XK_h: ksym = XK_BackSpace; break;
+		case XK_h: ksym = XK_Left;      break;
+		case XK_l: ksym = XK_Right;     break;
+		case XK_k: ksym = XK_Up;        break;
+		case XK_j: ksym = XK_Down;      break;
 		case XK_i: ksym = XK_Tab;       break;
-		case XK_j: /* fallthrough */
 		case XK_J: /* fallthrough */
 		case XK_m: /* fallthrough */
 		case XK_M: ksym = XK_Return; ev->state &= ~ControlMask; break;
 		case XK_n: ksym = XK_Down;      break;
 		case XK_p: ksym = XK_Up;        break;
 
-		case XK_k: /* delete right */
-			text[cursor] = '\0';
-			match();
-			break;
 		case XK_u: /* delete left */
 			insert(NULL, 0 - cursor);
 			break;
@@ -401,10 +401,13 @@ keypress(XKeyEvent *ev)
 			goto draw;
 		case XK_g: ksym = XK_Home;  break;
 		case XK_G: ksym = XK_End;   break;
-		case XK_h: ksym = XK_Up;    break;
-		case XK_j: ksym = XK_Next;  break;
-		case XK_k: ksym = XK_Prior; break;
-		case XK_l: ksym = XK_Down;  break;
+		case XK_j: /* fallthrough */
+		case XK_h: ksym = XK_BackSpace; break;
+		case XK_k: /* fallthrough */
+		case XK_l:
+			text[cursor] = '\0';
+			match();
+			break;
 		default:
 			return;
 		}
@@ -457,6 +460,27 @@ insert:
 		calcoffsets();
 		break;
 	case XK_Left:
+		if (columns > 1) {
+			if (!sel)
+				return;
+			tmpsel = sel;
+			for (i = 0; i < lines; i++) {
+				if (!tmpsel->left || tmpsel->left->right != tmpsel) {
+					if (offscreen)
+						break;
+					return;
+				}
+				if (tmpsel == curr)
+					offscreen = 1;
+				tmpsel = tmpsel->left;
+			}
+			sel = tmpsel;
+			if (offscreen) {
+				curr = prev;
+				calcoffsets();
+			}
+			break;
+		}
 	case XK_KP_Left:
 		if (cursor > 0 && (!sel || !sel->left || lines > 0)) {
 			cursor = nextrune(-1);
@@ -497,6 +521,27 @@ insert:
 			sel->out = 1;
 		break;
 	case XK_Right:
+		if (columns > 1) {
+			if (!sel)
+				return;
+			tmpsel = sel;
+			for (i = 0; i < lines; i++) {
+				if (!tmpsel->right ||  tmpsel->right->left != tmpsel) {
+					if (offscreen)
+						break;
+					return;
+				}
+				tmpsel = tmpsel->right;
+				if (tmpsel == next)
+					offscreen = 1;
+			}
+			sel = tmpsel;
+			if (offscreen) {
+				curr = next;
+				calcoffsets();
+			}
+			break;
+		}
 	case XK_KP_Right:
 		if (text[cursor] != '\0') {
 			cursor = nextrune(+1);
