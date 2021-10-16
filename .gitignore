@@ -1,4 +1,5 @@
 *.o
+dmenu
 stest
 config.h
 .ccls-cache/*
