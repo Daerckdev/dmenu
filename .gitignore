@@ -1,0 +1,6 @@
+*.o
+stest
+config.h
+.ccls-cache/*
+*.orig
+*.rej
