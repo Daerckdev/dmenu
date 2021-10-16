@@ -1,8 +1,8 @@
 diff --git a/dmenu.c b/dmenu.c
-index 65f25ce..dfa59db 100644
+index 76acee6..3588890 100644
 --- a/dmenu.c
 +++ b/dmenu.c
-@@ -500,6 +500,119 @@ draw:
+@@ -546,6 +546,125 @@ draw:
  	drawmenu();
  }
  
@@ -11,7 +11,7 @@ index 65f25ce..dfa59db 100644
 +{
 +	struct item *item;
 +	XButtonPressedEvent *ev = &e->xbutton;
-+	int x = 0, y = 0, h = bh, w;
++	int x = 0, y = 0, h = bh, w, item_num = 0;
 +
 +	if (ev->window != win)
 +		return;
@@ -66,8 +66,14 @@ index 65f25ce..dfa59db 100644
 +		/* vertical list: (ctrl)left-click on item */
 +		w = mw - x;
 +		for (item = curr; item != next; item = item->right) {
++			if (item_num++ == lines){
++				item_num = 1;
++				x += w / columns;
++				y = 0;
++			}
 +			y += h;
-+			if (ev->y >= y && ev->y <= (y + h)) {
++			if (ev->y >= y && ev->y <= (y + h) &&
++			    ev->x >= x && ev->x <= (x + w / columns)) {
 +				puts(item->text);
 +				if (!(ev->state & ControlMask))
 +					exit(0);
@@ -122,7 +128,7 @@ index 65f25ce..dfa59db 100644
  static void
  paste(void)
  {
-@@ -561,6 +674,9 @@ run(void)
+@@ -607,6 +726,9 @@ run(void)
  				break;
  			cleanup();
  			exit(1);
@@ -132,7 +138,7 @@ index 65f25ce..dfa59db 100644
  		case Expose:
  			if (ev.xexpose.count == 0)
  				drw_map(drw, win, 0, 0, mw, mh);
-@@ -658,7 +774,8 @@ setup(void)
+@@ -704,7 +826,8 @@ setup(void)
  	/* create menu window */
  	swa.override_redirect = True;
  	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
