@@ -252,7 +252,7 @@ int
 drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lpad, const char *text, int invert)
 {
     int i, ty, ellipsis_x = 0;
-    unsigned int tmpw, ew, ellipsis_w = 0, ellipsis_len, ellipsis_width;
+    unsigned int tmpw, ew, ellipsis_w = 0, ellipsis_len;
 	XftDraw *d = NULL;
 	Fnt *usedfont, *curfont, *nextfont;
 	int utf8strlen, utf8charlen, render = x || y || w || h;
@@ -267,7 +267,9 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
     enum { nomatches_len = 64 };
     static struct { long codepoint[nomatches_len]; unsigned int idx; } nomatches;
 
-	if (!drw || (render && !drw->scheme) || !text || !drw->fonts)
+    static unsigned int ellipsis_width = 0;
+
+	if (!drw || (render && (!drw->scheme || !w )) || !text || !drw->fonts)
 		return 0;
 
 	if (!render) {
@@ -283,7 +285,9 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 	}
 
 	usedfont = drw->fonts;
-    drw_font_getexts(usedfont, "...", 3, &ellipsis_width, NULL);
+    if (!ellipsis_width && render){
+        ellipsis_width = drw_fontset_getwidth(drw, "...");
+    }
 	while (1) {
         ew = ellipsis_len = utf8strlen = 0;
 		utf8str = text;
@@ -321,9 +325,9 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 				}
 			}
 
-            if (overflow || !charexists || nextfont)
+            if (overflow || !charexists || nextfont) {
 				break;
-			else
+            } else
 				charexists = 0;
 		}
 
@@ -415,6 +419,15 @@ drw_fontset_getwidth(Drw *drw, const char *text)
 	return drw_text(drw, 0, 0, 0, 0, 0, text, 0);
 }
 
+unsigned int
+drw_fontset_getwidth_clamp(Drw *drw, const char *text, unsigned int n)
+{
+       unsigned int tmp = 0;
+       if (drw && drw->fonts && text && n)
+               tmp = drw_text(drw, 0, 0, 0, 0, 0, text, n);
+       return MIN(n, tmp);
+}
+
 void
 drw_font_getexts(Fnt *font, const char *text, unsigned int len, unsigned int *w, unsigned int *h)
 {
@@ -428,15 +441,6 @@ drw_font_getexts(Fnt *font, const char *text, unsigned int len, unsigned int *w,
 		*w = ext.xOff;
 	if (h)
 		*h = font->h;
-}
-
-unsigned int
-drw_fontset_getwidth_clamp(Drw *drw, const char *text, unsigned int n)
-{
-       unsigned int tmp = 0;
-       if (drw && drw->fonts && text && n)
-               tmp = drw_text(drw, 0, 0, 0, 0, 0, text, n);
-       return MIN(n, tmp);
 }
 
 Cur *
