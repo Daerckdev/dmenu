@@ -8,6 +8,7 @@
 - [grid](https://tools.suckless.org/dmenu/patches/grid/).
 - [gridnav](https://tools.suckless.org/dmenu/patches/gridnav/).
 - [mousesupport](https://tools.suckless.org/dmenu/patches/mouse-support/).
+- [xresources](https://tools.suckless.org/dmenu/patches/xresources-alt/).
 
 ## Installation guide
 
