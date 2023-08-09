@@ -1,5 +1,5 @@
 # dmenu version
-VERSION = 5.1-Daerck
+VERSION = 5.2-Daerck
 
 # paths
 PREFIX = /usr/local
